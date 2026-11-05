@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 from flask import current_app
 from werkzeug.exceptions import Unauthorized
@@ -25,10 +25,10 @@ class PassportService:
     def get_account_jwt_token(account):
         payload = {
             "user_id": str(account.id),
-            "exp": datetime.utcnow() + timedelta(days=30),
+            "exp": datetime.now(timezone.utc) + timedelta(days=30),
             # "iss": current_app.config['EDITION'],
             "sub": 'Console API Passport',
-            "iat": datetime.utcnow(),  # 添加创建时间
+            "iat": datetime.now(timezone.utc),  # 添加创建时间
         }
 
         token = PassportService().issue(payload)
