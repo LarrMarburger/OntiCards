@@ -118,6 +118,28 @@ def get_cors_allow_origins(env, default):
     return cors_allow_origins
 
 
+def _check_secret_key() -> str:
+    """启动时校验 SECRET_KEY — 生产环境必须显式配置"""
+    key = get_env('SECRET_KEY') or ''
+    if not key or key.strip() == '':
+        import secrets, sys
+        fallback = secrets.token_urlsafe(48)
+        box = (\n            '╔══════════════════════════════════════════════════════════════════════════╗\n'
+            '║                              ⚠️  SECRET_KEY 警告                             ║\n'
+            '╠══════════════════════════════════════════════════════════════════════════╣\n'
+            '║  未检测到 SECRET_KEY — 已自动生成一次性随机值用于本次运行。                    ║\n'
+            '║  警告：此值每次进程启动都会改变，将导致所有已签发的 JWT token 失效！           ║\n'
+            '║  请立即在 .env 中添加：                                                     ║\n'
+            '║                                                                              ║\n'
+            f'║  SECRET_KEY={fallback.ljust(56)} ║\n'
+            '║                                                                              ║\n'
+            '╚══════════════════════════════════════════════════════════════════════════╝'
+        )
+        print(box, file=sys.stderr)
+        return fallback
+    return key
+
+
 class Config:
     """Application configuration class."""
 
@@ -155,7 +177,7 @@ class Config:
         self.APP_URL = get_env('APP_URL')
 
         # Your App secret key will be used for securely signing the session cookie
-        self.SECRET_KEY = get_env('SECRET_KEY')
+        self.SECRET_KEY = _check_secret_key()
 
         # cors settings
         self.CONSOLE_CORS_ALLOW_ORIGINS = get_cors_allow_origins(
